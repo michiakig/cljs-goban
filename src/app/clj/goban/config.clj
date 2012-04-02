@@ -7,10 +7,13 @@
           :js "public/javascripts"
           :dev-js-file-name "main.js"
           :prod-js-file-name "mainp.js"
-          :dev-js ["goog.require('goban.core');"
+          :dev-js ["goog.require('goban.model');"
                    "goog.require('goban.view');"
+                   "goog.require('goban.controller');"
+                   "goog.require('goban.core');"
+                   "goban.core.start();"
                    "goban.core.repl();"]
-          :prod-js ["goog.require('goban.core');"]
+          :prod-js ["goban.core.start();"]
           ;; list of clj files to watch for changes
           :reload-clj ["/goban/repl"
                        "/goban/config"

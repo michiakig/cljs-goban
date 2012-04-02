@@ -12,6 +12,7 @@
                 set-style!
                 set-styles!
                 single-node
+                set-attr!
                 )])
   (:require-macros [goban.snippets :as snippets])
   (:require [one.dispatch :as dispatch]
@@ -25,7 +26,7 @@
 
 (defn render-stone
   "Adds a stone of color (a keyword) at x, y"
-  [color x y]
+  [[color [x y]]]
   (let [img (single-node (color snippets))]
     (set-styles! img {:position "absolute"
                       :left (+ (* step (dec x)) offset-x)
@@ -35,9 +36,8 @@
 (defn render-board
   "Add all the stones to a board of size * size"
   [stones size]
-  ;; render the board itself
-  (doseq [[color x y] stones]
-    (render-stone color x y offset-x offset-y)))
+  (doseq [[color pos] stones]
+    (render-stone color pos offset-x offset-y)))
 
 (defn clear-board
   "Remove all the stones, leave the board"
@@ -59,6 +59,24 @@
     (event/listen board "click" #(dispatch/fire [:click board-id]
                                                 (click-to-position %)))))
 
-(add-event-listeners "board")
+(defn init-view
+  [board ;; white black
+   ]
+  (let [board-node (single-node board)]
+    (set-attr! board-node "id" "board")
+    (append! (.-body js/document) board-node)))
 
-;; (dispatch/react-to #{[:click "board"]} (fn [_ [x y]] (.log js/console x y)))
+(defmulti render
+  "Accepts a map representing the state of the app and renders it"
+  :state)
+
+(defmethod render :init [m]
+  (init-view (:board snippets) ;; (:white snippets) (:black snippets)
+             )
+  (render-board (:board m) (:size m))
+  (add-event-listeners "board"))
+
+(defmethod render :in-progress [m]
+  (render-stone (last (:board m))))
+
+(dispatch/react-to #{:state-change} (fn [_ m] (render m)))

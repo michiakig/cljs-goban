@@ -13,6 +13,4 @@
   []
   {:white (snippet "board.html" [:img.white])
    :black (snippet "board.html" [:img.black])
-   :star (snippet "board.html" [:img.star])
-   :point (snippet "board.html" [:img.point])
-   :space (snippet "board.html" [:img.space])})
+   :board (snippet "board.html" [:img.board])})
