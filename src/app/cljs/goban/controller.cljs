@@ -6,7 +6,7 @@
   :type)
 
 (defmethod action :init [_]
-  (reset! state {:state :init :board []}))
+  (reset! state {:state :init :board [] :turn :black}))
 
 (dispatch/react-to #{:init}
                    (fn [t d] (action (assoc d :type t))))
