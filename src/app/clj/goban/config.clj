@@ -11,6 +11,7 @@
                    "goog.require('goban.view');"
                    "goog.require('goban.controller');"
                    "goog.require('goban.core');"
+                   "goog.require('goban.board');"
                    "goban.core.start();"
                    "goban.core.repl();"]
           :prod-js ["goban.core.start();"]
