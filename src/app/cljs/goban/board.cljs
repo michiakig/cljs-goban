@@ -78,6 +78,20 @@
           (conj visited (peek q))
           (conj acc (peek q)))))))
 
+(defn empty-adjacent-points
+  [board pos]
+  (filter #(not (board %)) (adjacent-points pos (:size board))))
+
 (defn count-liberties
   [board pos]
-  (count (filter #(not (board %)) (adjacent-points pos (:size board)))))
+  (count (empty-adjacent-points board pos)))
+
+(defn count-group-liberties
+  [board group]
+  (count (reduce (fn [acc pos]
+                   (let [it (empty-adjacent-points board pos)]
+                     (if (empty? it)
+                       acc
+                       (apply conj acc it))))
+                 #{}
+                 group)))

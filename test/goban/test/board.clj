@@ -85,3 +85,27 @@
          w b w
          . w .] [2 2] 0
          ))
+
+(deftest test-count-group-liberties
+  (are [board group ls]
+       (= ls (cljs-eval goban.board (count-group-liberties (flat-board-to-map board) group)))
+       '[b . .
+         . . .
+         . . .] [[1 1]] 2
+
+       '[b w .
+         . . .
+         . . .] [[1 1]] 1
+
+       '[. . .
+         . b .
+         . . .] [[2 2]] 4
+
+       '[. w .
+         w b w
+         . w .] [[2 2]] 0
+
+       '[w w .
+         w b .
+         . . .] [[1 1] [1 2] [2 1]] 2
+         ))

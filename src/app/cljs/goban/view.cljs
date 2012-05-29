@@ -24,20 +24,26 @@
 (def offset-x 0)
 (def offset-y 0)
 
-(defn render-stone
+(defn render-added-stone
   "Adds a stone of color (a keyword) at x, y"
-  [[color [x y]]]
+  [color [x y]]
   (let [img (single-node (color snippets))]
     (set-styles! img {:position "absolute"
                       :left (+ (* step (dec x)) offset-x)
                       :top (+ (* step (dec y)) offset-y)})
+    (set-attr! img "id" (str x y)) ; bit of a hack for now
     (append! (.-body js/document) img)))
+
+(defn render-removed-stone
+  [[x y]]
+  (when-let [img (by-id (str x y))]
+    (destroy! img)))
 
 (defn render-board
   "Add all the stones to a board of size * size"
   [stones size]
-  (doseq [[color pos] stones]
-    (render-stone color pos offset-x offset-y)))
+  (doseq [[pos color] stones]
+    (render-added-stone color pos)))
 
 (defn clear-board
   "Remove all the stones, leave the board"
@@ -60,8 +66,7 @@
                                                 (click-to-position %)))))
 
 (defn init-view
-  [board ;; white black
-   ]
+  [board]
   (let [board-node (single-node board)]
     (set-attr! board-node "id" "board")
     (append! (.-body js/document) board-node)))
@@ -71,12 +76,13 @@
   :state)
 
 (defmethod render :init [m]
-  (init-view (:board snippets) ;; (:white snippets) (:black snippets)
-             )
-  (render-board (:board m) (:size m))
+  (init-view (:board snippets))
+  (render-board (dissoc (:board m) :size) (:size (:board m)))
   (add-event-listeners "board"))
 
 (defmethod render :in-progress [m]
-  (render-stone (last (:board m))))
+  (doseq [[change color pos]  (:last-changes m)]
+    (cond (= change :add) (render-added-stone color pos)
+          (= change :remove) (render-removed-stone pos))))
 
 (dispatch/react-to #{:state-change} (fn [_ m] (render m)))
