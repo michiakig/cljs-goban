@@ -29,65 +29,68 @@
         y (if (< y 10) (str 0 y) y)]
     (str x y)))
 
-(defn render-added-stone
-  "Adds a stone of color (a keyword) at x, y"
+(defn mk-stone-dom
+  "Makes an <img> elt for a stone of color at (x,y)"
   [color [x y]]
-  (let [img (single-node (color snippets))]
-    (set-styles! img {:position "absolute"
-                      :left (+ (* step (dec x)) offset-x)
-                      :top (+ (* step (dec y)) offset-y)})
-    (set-attr! img "id" (pos->str [x y])) ; bit of a hack for now
-    (append! (.-body js/document) img)))
+  (doto (single-node (color snippets))
+    (set-styles! {:position "absolute"
+                  :left (+ (* step (dec x)) offset-x)
+                  :top (+ (* step (dec y)) offset-y)})
+    (set-attr! "id" (pos->str [x y])))) ; bit of a hack for now
 
-(defn render-removed-stone
-  [[x y]]
-  (when-let [img (by-id (str x y))]
-    (destroy! img)))
+(defn mk-empty-board-dom
+  "Makes an <img> elt for an empty board"
+  [board-size]
+  (doto (single-node (board-size snippets))
+    (set-attr! "id" "board")))
 
-(defn render-board
-  "Add all the stones to a board of size * size"
-  [stones size]
-  (doseq [[pos color] stones]
-    (render-added-stone color pos)))
-
-(defn clear-board
+(defn clear-board!
   "Remove all the stones, leave the board"
   []
   (doseq [n (nodes [(by-class "white")
                     (by-class "black")])]
     (destroy! n)))
 
-(defn click-to-position
-  "Accepts a goog.dom.BrowserEvent and returns a vector of the x, y
-  position on the board that was clicked"
+(defn click->pos
+  "Convert a goog.dom.BrowserEvent to a vector of (x,y) position"
   [evt]
   [(inc (quot (- (.-clientX evt) offset-x) step))
    (inc (quot (- (.-clientY evt) offset-y) step))])
 
-(defn- add-event-listeners
-  [board-id]
-  (let [board (by-id board-id)]
-    (event/listen board "click" #(dispatch/fire [:click board-id]
-                                                (click-to-position %)))))
+(defn render-empty-board-once!
+  []
+  (when-not (by-id "board")
+    (let [board (mk-empty-board-dom :board)]
+      (event/listen board "click" #(dispatch/fire [:click "board"] (click->pos %)))
+      (append! (.-body js/document) board))))
 
-(defn init-view
-  [board]
-  (let [board-node (single-node board)]
-    (set-attr! board-node "id" "board")
-    (append! (.-body js/document) board-node)))
+(defn render-stone-once!
+  [color pos]
+  (when-not (by-id (pos->str pos))
+    (append! (.-body js/document) (mk-stone-dom color pos))))
+
+(defn render-all-stones-once!
+  [stones]
+  (doseq [[pos color] stones]
+    (render-stone-once! color pos)))
+
+(defn remove-stone!
+  "Remove the stone at pos, if it exists"
+  [pos]
+  (when-let [img (by-id (pos->str pos))]
+    (destroy! img)))
 
 (defmulti render
   "Accepts a map representing the state of the app and renders it"
   :state)
 
 (defmethod render :init [m]
-  (init-view (:board snippets))
-  (render-board (dissoc (:board m) :size) (:size (:board m)))
-  (add-event-listeners "board"))
+  (render-empty-board-once!)
+  (render-all-stones-once! (dissoc (:board m) :size)))
 
 (defmethod render :in-progress [m]
   (doseq [[change color pos]  (:last-changes m)]
-    (cond (= change :add) (render-added-stone color pos)
-          (= change :remove) (render-removed-stone pos))))
+    (cond (= change :add) (render-stone-once! color pos)
+          (= change :remove) (remove-stone! pos))))
 
 (dispatch/react-to #{:state-change} (fn [_ m] (render m)))
