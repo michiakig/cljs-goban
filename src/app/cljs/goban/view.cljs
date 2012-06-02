@@ -24,6 +24,11 @@
 (def offset-x 0)
 (def offset-y 0)
 
+(defn pos->str [[x y]]
+  (let [x (if (< x 10) (str 0 x) x)
+        y (if (< y 10) (str 0 y) y)]
+    (str x y)))
+
 (defn render-added-stone
   "Adds a stone of color (a keyword) at x, y"
   [color [x y]]
@@ -31,7 +36,7 @@
     (set-styles! img {:position "absolute"
                       :left (+ (* step (dec x)) offset-x)
                       :top (+ (* step (dec y)) offset-y)})
-    (set-attr! img "id" (str x y)) ; bit of a hack for now
+    (set-attr! img "id" (pos->str [x y])) ; bit of a hack for now
     (append! (.-body js/document) img)))
 
 (defn render-removed-stone
