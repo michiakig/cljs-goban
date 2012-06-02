@@ -84,13 +84,11 @@
   "Accepts a map representing the state of the app and renders it"
   :state)
 
-(defmethod render :init [m]
-  (render-empty-board-once!)
-  (render-all-stones-once! (dissoc (:board m) :size)))
-
-(defmethod render :in-progress [m]
-  (doseq [[change color pos]  (:last-changes m)]
-    (cond (= change :add) (render-stone-once! color pos)
-          (= change :remove) (remove-stone! pos))))
+(let [r (fn [m]
+          (render-empty-board-once!)
+          (clear-board!)
+          (render-all-stones-once! (dissoc (:board m) :size)))]
+  (defmethod render :init [m] (r m))
+  (defmethod render :in-progress [m] (r m)))
 
 (dispatch/react-to #{:state-change} (fn [_ m] (render m)))
