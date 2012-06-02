@@ -1,7 +1,7 @@
 (ns goban.model
   (:require [one.dispatch :as dispatch]))
 
-(def state (atom {}))
+(def state (atom '()))
 
 (add-watch state :state-change
            (fn [k r o n]
@@ -27,5 +27,12 @@
      :last-changes changes}))
 
 (dispatch/react-to #{:update}
-                   (fn [_ changes]
-                     (swap! state (partial update changes))))
+                   (fn [_ [new-board changes]]
+                     (swap! state (fn [old]
+                                    (let [old-state (first old)]
+                                      (cons
+                                       {:board new-board
+                                        :turn (next-turn (:turn old-state))
+                                        :state :in-progress
+                                        :last-changes changes}
+                                       old))))))

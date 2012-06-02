@@ -85,4 +85,4 @@
     (cond (= change :add) (render-added-stone color pos)
           (= change :remove) (render-removed-stone pos))))
 
-(dispatch/react-to #{:state-change} (fn [_ m] (render m)))
+(dispatch/react-to #{:state-change} (fn [_ state] (render (first state))))
